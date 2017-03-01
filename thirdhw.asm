@@ -1,6 +1,5 @@
 
 %include "asm_io.inc"
-%include "includedsub.asm"
 
 segment .data
 	msg1 db "Enter a postfix equation: "
@@ -14,9 +13,10 @@ segment .text
 
 read_postfix:
 		mov eax, msg1
-		print_string
-		read_string
+		call print_string
+		call read_char
 		mov [input], eax
+		ret
 postfix_to_infix:
 
 
