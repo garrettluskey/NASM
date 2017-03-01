@@ -2,10 +2,10 @@
 %include "asm_io.inc"
 
 segment .data
-	msg1 db "Enter a postfix equation: "
-
+	msg1 db "Enter a postfix equation: ",0
+	max_string_size equ 100
 segment .bss
-	input resd 10
+	input resd max_string_size
 	infix resd 1
 	prefix resd 1
 segment .text
@@ -18,21 +18,28 @@ read_postfix:
 		call read_char
 		call print_int
 		call print_nl
+		cmp al,'/'
+		je add_stack
+		cmp al,'*'
+		je add_stack
+		cmp al,'-'
+		je add_stack
+		cmp al,'+'
+		je add_stack
 		cmp al,10
 		jne do
-		return:
-		ret
+		jmp after
+		
 postfix_to_infix:
 
 
 postfix_to_prefix:
-		
+
+
 _asm_main:
 	enter   0,0               ; setup routine
 	pusha
-	xor ecx,ecx
-	call read_postfix
-	
+	jmp read_postfix
 			
 			
 	popa
