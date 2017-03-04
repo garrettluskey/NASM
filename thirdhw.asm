@@ -6,7 +6,8 @@ segment .data
 	max_string_size equ 100
 segment .bss
 	input resd max_string_size
-	infix resd 1
+	index resd 1
+	infix resd max_string_size
 	prefix resd 1
 	count resd 0
 	counter resd 0
@@ -14,43 +15,54 @@ segment .text
         global  _asm_main
 
 read_postfix:
+		
 		mov eax, msg1
-		call read_string
-		mov input, eax
+		call print_string
 		do:
-		mov al, [input + count]
+		call read_char
+		call print_int
 		cmp  al,'/'
 		je pop_stack
 		cmp  al,'*'
 		je pop_stack
 		cmp  al,'-'
 		je pop_stack
-		cmp  al,'+'
+	    cmp  al,'+'
 		je pop_stack
-		cmp al, 41  ;A
+		cmp al, 65  ;A
 		jge push_stack
 		cmp  al,10
 		jne do
 		jmp done
 		
 
-done:
+;done:
 			;dont know
 			
 push_stack:
 		push eax
-		
+		call print_char
+		jmp do
 pop_stack:
-		pop eax
+		pop edx
 		pop ebx
-		mov [infix + counter], '('
-		add counter, 1
-		mov [infix + counter], ebx
-		add counter, 1
-		mov[infix + counter], eax
-		add counter, 1
-		mov [infix + counter], ')'
-		
+		mov eax, edx
+		call print_char
+		mov eax, ebx
+		call print_char
+		xor ecx,ecx
+		mov ah, '('
+		mov [infix + ecx], ah
+		inc ecx
+		mov [infix + ecx], ebx
+		inc ecx
+		mov[infix + ecx], al
+		inc ecx
+		mov [infix + ecx], edx
+		inc ecx
+		mov ah, ')'
+		mov [infix + ecx], ah
+		jmp do
 postfix_to_infix:
 
 
@@ -61,6 +73,9 @@ _asm_main:
 	enter   0,0               ; setup routine
 	pusha
 	jmp read_postfix
+	done:
+	mov eax, [infix]
+	call print_string
 			
 			
 	popa
