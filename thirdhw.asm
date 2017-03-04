@@ -8,27 +8,48 @@ segment .bss
 	input resd max_string_size
 	infix resd 1
 	prefix resd 1
+	count resd 0
+	counter resd 0
 segment .text
         global  _asm_main
 
 read_postfix:
 		mov eax, msg1
-		call print_string
+		call read_string
+		mov input, eax
 		do:
-		call read_char
-		call print_int
-		call print_nl
-		cmp al,'/'
-		je add_stack
-		cmp al,'*'
-		je add_stack
-		cmp al,'-'
-		je add_stack
-		cmp al,'+'
-		je add_stack
-		cmp al,10
+		mov al, [input + count]
+		cmp  al,'/'
+		je pop_stack
+		cmp  al,'*'
+		je pop_stack
+		cmp  al,'-'
+		je pop_stack
+		cmp  al,'+'
+		je pop_stack
+		cmp al, 41  ;A
+		jge push_stack
+		cmp  al,10
 		jne do
-		jmp after
+		jmp done
+		
+
+done:
+			;dont know
+			
+push_stack:
+		push eax
+		
+pop_stack:
+		pop eax
+		pop ebx
+		mov [infix + counter], '('
+		add counter, 1
+		mov [infix + counter], ebx
+		add counter, 1
+		mov[infix + counter], eax
+		add counter, 1
+		mov [infix + counter], ')'
 		
 postfix_to_infix:
 
