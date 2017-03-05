@@ -6,7 +6,8 @@ segment .data
 	max_string_size equ 100
 segment .bss
 	input resd max_string_size
-	infix resd 1
+	symbols resd max_string_size
+	infix resd 0
 	prefix resd 1
 	count resd 0
 segment .text
@@ -16,75 +17,68 @@ read_postfix:
 		mov eax, msg1
 		call print_string
 		xor ecx,ecx
+		xor edx, edx
 		do:
 		call read_char
-		call print_char
-		call print_nl
-		cmp al,'/'
-		je add_stack
-		cmp al,'*'
-		je add_stack
-		cmp al,'-'
-		je add_stack
-		cmp al,'+'
-		je add_stack
 		mov [input + ecx], al
 		inc ecx
 		cmp al,10
 		jne do
-		jmp after
+		ret
 		
 postfix_to_infix:
 		
 		xor ecx,ecx
 		xor edx, edx
-		mov eax, [input + edx]
-		dump_regs 1
-		inc edx
-		mov [infix + ecx], eax
-		
-		dump_regs 2
+		doing:
+		mov al,[input + ecx]
+		cmp al, '/'
+		je infix_middle
+		cmp al, '*'
+		je infix_middle
+		cmp al, '-'
+		je infix_middle
+		cmp al, '+'
+		je infix_middle
 		inc ecx
-		pop ebx
-		
-		dump_regs 3
-		mov eax, ebx
-		call print_int
-		mov [infix + ecx], edx
-		
-		dump_regs 4
-		inc ecx
-		mov eax, [input + edx]
-		
-		dump_regs 5
-		inc edx
-		mov [infix + ecx], eax
-		
-		dump_regs 6
-		inc ecx
-
-		
-		jmp done
+		cmp al, 10
+		jne doing
+		ret
 
 postfix_to_prefix:
 
-add_stack:
-	push eax
-	jmp do
-
+infix_middle:
+		mov eax, [input + ecx - 2]
+		call print_char
+		mov [infix + edx], eax
+		inc edx
+		mov eax, [input + ecx]
+		mov [infix + edx], eax
+		inc edx
+		mov eax, [input + ecx - 1]
+		mov [infix + edx], eax
+		inc edx
+		ret
 _asm_main:
 	enter   0,0               ; setup routine
 	pusha
-	jmp read_postfix
-	after:
-	jmp postfix_to_infix
-	done:
+	call read_postfix
+	call postfix_to_infix
+	xor ecx,ecx
+	call print_nl
 	
+	looping:
+	dump_regs 1
+	mov al,[infix+ecx]
+	inc ecx
+	call print_char
 	
-	mov esp,ebp
-	dump_stack 1,2,3
-	mov eax,[infix]
-	call print_string
+	cmp al,10
+	
+	jne looping
+	
+	call print_nl
+	dump_regs 1
 	popa
 	mov     eax, 0            ; return back to C
 	leave                     
