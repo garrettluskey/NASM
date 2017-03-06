@@ -22,7 +22,7 @@ read_postfix:
 		call read_char
 		mov [input + ecx], al
 		inc ecx
-		cmp al,10
+		cmp al,0xA 
 		jne do
 		ret
 		
@@ -41,11 +41,21 @@ postfix_to_infix:
 		cmp al, '+'
 		je infix_middle
 		inc ecx
-		cmp al, 10
+		cmp al, [esp]
 		jne doing
+		;mov [infix + edx], 0xA
 		ret
 
 postfix_to_prefix:
+		
+		mov [prefix + edx], eax
+		inc edx
+		mov ebx, [input + ecx - 2]
+		mov [prefix + edx], ebx
+		inc edx
+		mov ebx, [input + ecx - 1]
+		mov [prefix + edx], ebx
+		
 
 infix_middle:
 		mov eax, [input + ecx - 2]
@@ -59,6 +69,11 @@ infix_middle:
 		mov [infix + edx], eax
 		inc edx
 		ret
+		
+print:
+	call print_char
+	;jmp looping
+	
 _asm_main:
 	enter   0,0               ; setup routine
 	pusha
@@ -66,19 +81,27 @@ _asm_main:
 	call postfix_to_infix
 	xor ecx,ecx
 	call print_nl
+	mov eax, infix
+	call print_string
+	;looping:
+	; mov al,[infix+ecx]
+	; inc ecx
+	; call print_char
+	; mov al,[infix+ecx]
+	; inc ecx
+	; call print_char
+	; mov al,[infix+ecx]
+	; inc ecx
+	; call print_char
+	; mov al,[infix+ecx]
+	; inc ecx
+	; call print_char
 	
-	looping:
-	dump_regs 1
-	mov al,[infix+ecx]
-	inc ecx
-	call print_char
-	
-	cmp al,10
-	
-	jne looping
-	
+	;cmp al,0xA
+	;jne print
+	;jne looping
 	call print_nl
-	dump_regs 1
+	
 	popa
 	mov     eax, 0            ; return back to C
 	leave                     
