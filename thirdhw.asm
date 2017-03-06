@@ -11,65 +11,66 @@ segment .bss
 	prefix resd 1
 	count resd 0
 segment .text
-        global  _asm_main
+	global  _asm_main
 
 read_postfix:
-		mov eax, msg1
-		call print_string
-		xor ecx,ecx
-		xor edx, edx
-		do:
-		call read_char
-		mov [input + ecx], al
-		inc ecx
+	mov eax, msg1
+	call print_string
+	xor ecx,ecx
+	xor edx, edx
+	do:
+	call read_char
+	mov [input + ecx], al
+	inc ecx
 
-		cmp al,0xA 
-		jne do
-		ret
+	cmp al,0xA 
+	jne do
+	ret
 		
 postfix_to_infix:
 		
-		xor ecx,ecx
-		xor edx, edx
-		doing:
-		mov al,[input + ecx]
-		cmp al, '/'
-		je infix_middle
-		cmp al, '*'
-		je infix_middle
-		cmp al, '-'
-		je infix_middle
-		cmp al, '+'
-		je infix_middle
-		inc ecx
-		cmp al, [esp]
-		jne doing
-		;mov [infix + edx], 0xA
-		ret
-
+	xor ecx,ecx
+	xor edx, edx
+	doing:
+	mov al,[input + ecx]
+	cmp al, '/'
+	je infix_middle
+	cmp al, '*'
+	je infix_middle
+	cmp al, '-'
+	je infix_middle
+	cmp al, '+'
+	je infix_middle
+	inc ecx
+	
+	cmp al, 10
+	call print_int
+	jne doing
+	;mov [infix + edx], 0xA
+	ret
+infix_middle:
+	mov al, [input + ecx - 2]
+	dump_regs edx
+	mov [infix + edx], eax
+	inc edx
+	mov al, [input + ecx]
+	mov [infix + edx], eax
+	inc edx
+	mov al, [input + ecx - 1]
+	mov [infix + edx], eax
+	inc edx
 postfix_to_prefix:
 		
-		mov [prefix + edx], eax
-		inc edx
-		mov ebx, [input + ecx - 2]
-		mov [prefix + edx], ebx
-		inc edx
-		mov ebx, [input + ecx - 1]
-		mov [prefix + edx], ebx
-		
+	mov [prefix + edx], eax
+	inc edx
+	mov ebx, [input + ecx - 2]
+	mov [prefix + edx], ebx
+	inc edx
+	mov ebx, [input + ecx - 1]
+	mov [prefix + edx], ebx
+	ret
 
-infix_middle:
-		mov al, [input + ecx - 2]
-		;call print_char
-		mov [infix + edx], eax
-		inc edx
-		mov al, [input + ecx]
-		mov [infix + edx], eax
-		inc edx
-		mov al, [input + ecx - 1]
-		mov [infix + edx], eax
-		inc edx
-		ret
+
 		
 print:
 	call print_char
