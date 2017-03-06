@@ -22,6 +22,7 @@ read_postfix:
 		call read_char
 		mov [input + ecx], al
 		inc ecx
+
 		cmp al,0xA 
 		jne do
 		ret
@@ -58,14 +59,14 @@ postfix_to_prefix:
 		
 
 infix_middle:
-		mov eax, [input + ecx - 2]
+		mov al, [input + ecx - 2]
 		;call print_char
 		mov [infix + edx], eax
 		inc edx
-		mov eax, [input + ecx]
+		mov al, [input + ecx]
 		mov [infix + edx], eax
 		inc edx
-		mov eax, [input + ecx - 1]
+		mov al, [input + ecx - 1]
 		mov [infix + edx], eax
 		inc edx
 		ret
