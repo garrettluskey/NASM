@@ -12,6 +12,7 @@ segment .bss
 	infix times max_string_size resd 0
 	prefix resd 1
 	count resd 1
+	counter resd 1
 	operand resb 0
 	
 segment .text
@@ -85,13 +86,20 @@ infix_first:
 	pop eax		
 	call print_char
 	call print_nl
-
-	mov [buffer], eax		;it is only adding this
-	mov [buffer + 1], ebx	;operator
+	mov byte[buffer], '('
+	mov [buffer + 1], eax		;it is only adding this
+	mov edx, [counter]
+	mov [buffer + edx], ebx	;operator
+	add byte[counter], 1
 	pop eax
 	call print_char
 	call print_nl
-	mov [buffer + 2], eax
+	mov edx, [counter]
+	mov [buffer + edx], eax
+	add byte[counter], 1
+	mov edx, [counter]
+	mov byte[buffer + edx], ')'
+	add byte[counter], 2
 	mov eax, buffer
 	call print_string
 	dump_regs 2
@@ -125,6 +133,7 @@ _asm_main:
 	pusha
 	;call print_int
 	mov byte[count], 1
+	mov byte[counter], 2
 	call read_postfix
 	call postfix_to_infix
 	xor ecx,ecx
