@@ -8,7 +8,7 @@ segment .data
 segment .bss
 	input resd max_string_size
 	operands resb max_string_size
-	buffer resd max_string_size
+	buffer resb max_string_size
 	infix times max_string_size resd 0
 	prefix resd 1
 	count resd 1
@@ -87,11 +87,11 @@ infix_first:
 	call print_nl
 
 	mov [buffer], eax		;it is only adding this
-	mov [buffer + 4], ebx	;operator
+	mov [buffer + 1], ebx	;operator
 	pop eax
 	call print_char
 	call print_nl
-	mov [buffer + 8], eax
+	mov [buffer + 2], eax
 	mov eax, buffer
 	call print_string
 	dump_regs 2
