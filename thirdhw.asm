@@ -7,8 +7,8 @@ segment .data
 segment .bss
 	input resd max_string_size
 	operands resb max_string_size
-	buffer resd max_string_size
-	infix resd 0
+	buffer times max_string_size resd 0
+	infix times max_string_size resd 0
 	prefix resd 1
 	count resd 0
 	operand resb 0
@@ -37,7 +37,9 @@ postfix_to_infix:
 	xor edx, edx
 	xor ebx,ebx
 	first:
+	
 	mov al,[input + ecx]
+	call print_char
 	cmp al, 10
 	je return
 	cmp al, '/'
@@ -49,7 +51,6 @@ postfix_to_infix:
 	cmp al, '+'
 	je infix_first
 	push eax
-	dump_regs ecx
 	inc ecx
 	jmp first
 
@@ -61,18 +62,18 @@ postfix_to_infix:
 infix_first:
 	xor edx,edx
 	mov [buffer], edx
-	mov [buffer + 4], al
-	;call print_char
+	mov bl, al
 	pop eax
-	;call print_int
 	mov [buffer], eax
+	mov [buffer + 4], ebx
 	pop eax
-	;call print_string
 	mov [buffer + 8], eax
 	mov eax,[buffer]
+	call print_string
 	dump_regs 2
-	;call print_string
+	
 	push eax
+	call print_char
 	xor eax, eax
 	inc ecx
 	jmp first
