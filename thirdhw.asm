@@ -17,6 +17,7 @@ segment .text
 	global  _asm_main
 
 read_postfix:
+	
 	mov eax, msg1
 	call print_string
 	xor ecx,ecx
@@ -27,21 +28,31 @@ read_postfix:
 	mov [input + ecx], al
 	inc ecx
 
-	cmp al,0xA 
+	cmp al,0xA
+	je exit
 	jne do
+
+	
+exit:
+	mov byte[input + ecx], 0
 	ret
 		
 postfix_to_infix:
-	dump_stack 1,2,3
+	;dump_stack 1,2,3
 	xor ecx,ecx
 	xor edx, edx
 	xor ebx,ebx
+	mov eax, input
+	call print_string
+	xor eax, eax
 	first:
-	
 	mov al,[input + ecx]
 	call print_char
-	cmp al, 10
-	je return
+	mov eax, msg1
+	call print_string
+	cmp ecx, 0		;was oringinally set to 10
+					;not jumping to return. it should be. EAX should be 
+	je return		;10 or 0xA but it is 0804A02C which means nothing
 	cmp al, '/'
 	je infix_first
 	cmp al, '*'
@@ -55,6 +66,7 @@ postfix_to_infix:
 	jmp first
 
 	return:
+	dump_regs 69
 	pop eax
 	mov [infix], eax
 	dump_regs 1
@@ -99,7 +111,7 @@ print:
 _asm_main:
 	enter   0,0               ; setup routine
 	pusha
-	call print_int
+	;call print_int
 	call read_postfix
 	call postfix_to_infix
 	xor ecx,ecx
