@@ -4,13 +4,14 @@
 segment .data
 	msg1 db "Enter a postfix equation: ",0
 	max_string_size equ 100
+
 segment .bss
 	input resd max_string_size
 	operands resb max_string_size
-	buffer times max_string_size resd 0
+	buffer resd max_string_size
 	infix times max_string_size resd 0
 	prefix resd 1
-	count resd 0
+	count resd 1
 	operand resb 0
 	
 segment .text
@@ -27,14 +28,15 @@ read_postfix:
 	call read_char
 	mov [input + ecx], al
 	inc ecx
-
+	
 	cmp al,0xA
 	je exit
+	add byte[count], 1
 	jne do
 
 	
 exit:
-	mov byte[input + ecx], 0
+	;mov word[input + ecx], 'NUL'
 	ret
 		
 postfix_to_infix:
@@ -48,11 +50,11 @@ postfix_to_infix:
 	first:
 	mov al,[input + ecx]
 	call print_char
-	mov eax, msg1
-	call print_string
-	cmp ecx, 0		;was oringinally set to 10
-					;not jumping to return. it should be. EAX should be 
-	je return		;10 or 0xA but it is 0804A02C which means nothing
+	sub byte[count], 1
+	cmp byte[count], 0		;was oringinally set to 10
+						;not jumping to return. it should be. EAX should be 
+	je return
+	dump_regs 4		;10 or 0xA but it is 0804A02C which means nothing
 	cmp al, '/'
 	je infix_first
 	cmp al, '*'
@@ -61,31 +63,41 @@ postfix_to_infix:
 	je infix_first
 	cmp al, '+'
 	je infix_first
+	cmp al, 41	;A
+	;push eax
+	jge pusher
+	inc ecx	;only inc when not operand
+	jmp first
+
+return:
+	ret
+pusher:
 	push eax
 	inc ecx
 	jmp first
-
-	return:
-	dump_regs 69
-	pop eax
-	mov [infix], eax
-	dump_regs 1
-	ret
+	
+	
 infix_first:
+	
 	xor edx,edx
 	mov [buffer], edx
-	mov bl, al
+	mov bl, al	
+	pop eax		
+	call print_char
+	call print_nl
+
+	mov [buffer], eax		;it is only adding this
+	mov [buffer + 4], ebx	;operator
 	pop eax
-	mov [buffer], eax
-	mov [buffer + 4], ebx
-	pop eax
+	call print_char
+	call print_nl
 	mov [buffer + 8], eax
-	mov eax,[buffer]
+	mov eax, buffer
 	call print_string
 	dump_regs 2
 	
-	push eax
-	call print_char
+	;push eax		;when commented out, does not cause segmentation error
+	;call print_char
 	xor eax, eax
 	inc ecx
 	jmp first
@@ -112,11 +124,11 @@ _asm_main:
 	enter   0,0               ; setup routine
 	pusha
 	;call print_int
+	mov byte[count], 1
 	call read_postfix
 	call postfix_to_infix
 	xor ecx,ecx
-	call print_nl
-	mov eax, infix
+	mov eax, buffer
 	call print_string
 	;looping:
 	; mov al,[infix+ecx]
