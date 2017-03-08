@@ -1,11 +1,14 @@
 ;
 ;
-;Names: Garrett Ludskey and Justin Mulrooney
+;Names: Garrett Luskey and Justin Mulrooney
 ;Course: CS 3230, Section 2, Spring 2017
 ;Purpose: This programs takes in a postfix expression and then
 ;		  outputs the expression in infix and prefix formatting.
 ;
-;Note: the prefix only works with 3 opeands and two opeartors. Such as
+;Note: the infix currently can't keep track of more than two operators in a row. ie. ABC+-
+;	   However putting operands in a list and getting operands from it would fix this. Currently they are taken from input strings that only can reach 2 right.
+;
+;Note: the prefix only works with 3 opeands and two operators. Such as
 ;      ab*c- it will output *ab-c
 ;
 ;
@@ -100,30 +103,34 @@ postfix_to_infix:
 return:
 	ret
 ;--------------------------------------------------------------
-;This subprogram is called to finish the postfix expression and
-;then it adds parenthesis where needed
+;This subprogram after finding two operands before a operator 
+;adds perentheses around the equation after fitting the operator
+;between the operators
 ;--------------------------------------------------------------	
 infix_first:
 	mov [infix + ebx], byte'('
 	inc ebx
 	mov al, [input + ecx - 2]
-	mov [infix + ebx], eax		;it is only adding this]
+	mov [infix + ebx], eax		
 	inc ebx
 	mov al,[input + ecx]
-	mov [infix + ebx], al	;operator
+	mov [infix + ebx], al
 	inc ebx
 	mov al, [input + ecx - 1]
 	mov [infix + ebx], eax
 	inc ebx
 	mov [infix + ebx], byte')'
 	
-	;push eax		;when commented out, does not cause segmentation error
-	;call print_char
-	
 	xor eax, eax
 	inc ecx
 	sub [count], byte 2
 	jmp middle
+;--------------------------------------------------------------
+;This subprogram checks how many operands where before the operator
+;and jumps to the correct subroutine. If there is only one operator
+;this routine adds the operand and operator on the end of the current
+;infix progress and adds perentheses around the entire equation. 
+;--------------------------------------------------------------	
 infix_middle:
 	xor eax,eax
 	mov [tmp], byte'(' ;adds 
@@ -162,7 +169,12 @@ infix_middle:
 	inc ecx
 	mov [count], byte 0
 	jmp middle
-	
+;--------------------------------------------------------------
+;This subprogram is called if no operands are before an operator.
+;It uses a counter to get the perenthesis level and puts the operator
+;inbetween the highest level perentheses. It then pushes the rest of
+;the string right 1 position.
+;--------------------------------------------------------------	
 infix_inner:
 	xor edx,edx
 	find_inner:
@@ -190,12 +202,12 @@ infix_inner:
 	jne move_right
 	jmp middle
 	
-	
+;Adds 1 to the perenthesis level
 counter_open:
 	add [counter], byte 1
 	jmp back
 	
-	
+;Removes 1 from the perenthesis	level
 counter_close:
 	sub [counter], byte 1
 	jmp back
