@@ -48,7 +48,7 @@ postfix_to_infix:
 	first:
 	mov al,[input + ecx]	;was oringinally set to 10
 						;not jumping to return. it should be. EAX should be 
-	dump_regs 4		;10 or 0xA but it is 0804A02C which means nothing
+						;10 or 0xA but it is 0804A02C which means nothing
 	cmp al, '/'
 	je infix_first
 	cmp al, '*'
@@ -62,8 +62,6 @@ postfix_to_infix:
 	
 	middle:
 	mov al,[input + ecx]
-	call print_char
-	call print_nl
 	cmp al, '/'
 	je infix_middle
 	cmp al, '*'
@@ -84,7 +82,6 @@ return:
 	ret
 	
 infix_first:
-	dump_regs 1
 	mov [infix + ebx], byte'('
 	inc ebx
 	mov al, [input + ecx - 2]
@@ -97,8 +94,6 @@ infix_first:
 	mov [infix + ebx], eax
 	inc ebx
 	mov [infix + ebx], byte')'
-	mov eax, infix
-	call print_string
 	
 	;push eax		;when commented out, does not cause segmentation error
 	;call print_char
@@ -111,14 +106,10 @@ infix_middle:
 	xor eax,eax
 	mov [tmp], byte'(' ;adds 
 	inc ebx
-	mov al, [count]
-	call print_int
-	call print_nl
 	cmp [count], byte 1
 	jg infix_first
 	cmp [count], byte 1
 	jl infix_inner
-	dump_regs 122
 	doing:
 	mov al, [infix + ebx-1]
 	mov [tmp+ebx], al
@@ -129,17 +120,13 @@ infix_middle:
 	dec ebx
 	xor eax,eax
 	mov al, [input + ecx]
-	call print_char
 	mov [tmp+ebx], al
 	mov al, [input + edx]
-	call print_char
 	inc ebx
 	mov [tmp+ebx],al
 	inc ebx
 	mov [tmp+ebx],byte')'
 	xor ebx,ebx
-	mov eax, tmp
-	call print_string
 	xor eax,eax
 	
 	looping:
@@ -155,7 +142,6 @@ infix_middle:
 	jmp middle
 	
 infix_inner:
-	dump_regs 123
 	xor edx,edx
 	find_inner:
 	mov al, [infix + edx]
@@ -187,36 +173,15 @@ counter_open:
 counter_close:
 	sub [counter], byte 1
 	jmp back
-print:
-	call print_char
-	;jmp looping
 	
 _asm_main:
 	enter   0,0               ; setup routine
 	pusha
-	;call print_int
 	call read_postfix
 	call postfix_to_infix
 	xor ecx,ecx
 	mov eax, infix
 	call print_string
-	;looping:
-	; mov al,[infix+ecx]
-	; inc ecx
-	; call print_char
-	; mov al,[infix+ecx]
-	; inc ecx
-	; call print_char
-	; mov al,[infix+ecx]
-	; inc ecx
-	; call print_char
-	; mov al,[infix+ecx]
-	; inc ecx
-	; call print_char
-	
-	;cmp al,0xA
-	;jne print
-	;jne looping
 	call print_nl
 	
 	popa
