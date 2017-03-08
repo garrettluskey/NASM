@@ -4,16 +4,14 @@
 segment .data
 	msg1 db "Enter a postfix equation: ",0
 	max_string_size equ 100
-
+	counter db 0
+	count db 2
 segment .bss
 	input resd max_string_size
 	operands resb max_string_size
 	infix resb max_string_size
 	tmp resb max_string_size
 	prefix resd 1
-	count resd 1
-	counter resd 1
-	base resb 0
 	
 segment .text
 	global  _asm_main
@@ -32,7 +30,6 @@ read_postfix:
 	
 	cmp al,0xA
 	je exit
-	add byte[count], 1
 	jne do
 
 	
@@ -64,10 +61,9 @@ postfix_to_infix:
 	jmp first
 	
 	middle:
-	
 	mov al,[input + ecx]
-	
-	dump_regs 122
+	call print_char
+	call print_nl
 	cmp al, '/'
 	je infix_middle
 	cmp al, '*'
@@ -77,53 +73,63 @@ postfix_to_infix:
 	cmp al, '+'
 	je infix_middle
 	mov edx, ecx
+	add [count],byte 1
+	inc ecx
 	cmp al, 0	;A
 	je return
-	;push eax
-	inc ecx	;only inc when not operand
+
 	jmp middle
 	ret
 return:
 	ret
 	
 infix_first:
-
-	xor edx,edx
-	mov [infix], edx
-	mov bl, al	
-	mov [infix], byte'('
+	dump_regs 1
+	mov [infix + ebx], byte'('
+	inc ebx
 	mov al, [input + ecx - 2]
-	mov [infix+1], eax		;it is only adding this]
-	mov [infix + 2], ebx	;operator
+	mov [infix + ebx], eax		;it is only adding this]
+	inc ebx
+	mov al,[input + ecx]
+	mov [infix + ebx], al	;operator
+	inc ebx
 	mov al, [input + ecx - 1]
-	mov [infix + 3], eax
-	mov [infix+4], byte')'
+	mov [infix + ebx], eax
+	inc ebx
+	mov [infix + ebx], byte')'
 	mov eax, infix
 	call print_string
-	dump_regs 2
 	
 	;push eax		;when commented out, does not cause segmentation error
 	;call print_char
+	
 	xor eax, eax
 	inc ecx
+	sub [count], byte 2
 	jmp middle
 infix_middle:
-	xor ebx,ebx
 	xor eax,eax
-	mov [tmp], byte'('
+	mov [tmp], byte'(' ;adds 
 	inc ebx
+	mov al, [count]
+	call print_int
+	call print_nl
+	cmp [count], byte 1
+	jg infix_first
+	cmp [count], byte 1
+	jl infix_inner
+	dump_regs 122
 	doing:
 	mov al, [infix + ebx-1]
 	mov [tmp+ebx], al
-	dump_regs 123
 	inc ebx
 	cmp al, 0
 	jne doing
+	
 	dec ebx
 	xor eax,eax
 	mov al, [input + ecx]
 	call print_char
-	dump_regs 51
 	mov [tmp+ebx], al
 	mov al, [input + edx]
 	call print_char
@@ -133,7 +139,6 @@ infix_middle:
 	mov [tmp+ebx],byte')'
 	xor ebx,ebx
 	mov eax, tmp
-	dump_regs 1023
 	call print_string
 	xor eax,eax
 	
@@ -146,10 +151,42 @@ infix_middle:
 	cmp al,0
 	jne looping
 	inc ecx
+	mov [count], byte 0
 	jmp middle
 	
-	
-
+infix_inner:
+	dump_regs 123
+	xor edx,edx
+	find_inner:
+	mov al, [infix + edx]
+	inc edx
+	cmp al,'('
+	je counter_open
+	cmp al,')'
+	je counter_close
+	back:
+	cmp [counter],byte 0
+	jne find_inner
+	mov al, [input + ecx]
+	inc ecx
+	move_right:
+	cmp al,0
+	je middle
+	mov ah, [infix + edx]
+	mov [infix + edx], al
+	inc edx
+	mov al, [infix + edx]
+	mov [infix + edx], ah
+	inc edx
+	cmp ah,0
+	jne move_right
+	jmp middle
+counter_open:
+	add [counter], byte 1
+	jmp back
+counter_close:
+	sub [counter], byte 1
+	jmp back
 print:
 	call print_char
 	;jmp looping
@@ -158,11 +195,8 @@ _asm_main:
 	enter   0,0               ; setup routine
 	pusha
 	;call print_int
-	mov byte[count], 1
-	mov byte[counter], 2
 	call read_postfix
 	call postfix_to_infix
-	dump_regs 201
 	xor ecx,ecx
 	mov eax, infix
 	call print_string
