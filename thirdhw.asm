@@ -8,10 +8,8 @@ segment .data
 segment .bss
 	input resd max_string_size
 	operands resb max_string_size
-	buffer resb max_string_size
-	infix times max_string_size resd 0
+	infix resb max_string_size
 	tmp resb max_string_size
-	tmp2 resb max_string_size
 	prefix resd 1
 	count resd 1
 	counter resd 1
@@ -68,8 +66,8 @@ postfix_to_infix:
 	middle:
 	
 	mov al,[input + ecx]
-	inc ecx
 	
+	dump_regs 122
 	cmp al, '/'
 	je infix_middle
 	cmp al, '*'
@@ -78,8 +76,8 @@ postfix_to_infix:
 	je infix_middle
 	cmp al, '+'
 	je infix_middle
-	mov ebx, ecx
-	cmp al, 10	;A
+	mov edx, ecx
+	cmp al, 0	;A
 	je return
 	;push eax
 	inc ecx	;only inc when not operand
@@ -91,16 +89,16 @@ return:
 infix_first:
 
 	xor edx,edx
-	mov [buffer], edx
+	mov [infix], edx
 	mov bl, al	
-	mov [buffer], byte'('
+	mov [infix], byte'('
 	mov al, [input + ecx - 2]
-	mov [buffer+1], eax		;it is only adding this]
-	mov [buffer + 2], ebx	;operator
+	mov [infix+1], eax		;it is only adding this]
+	mov [infix + 2], ebx	;operator
 	mov al, [input + ecx - 1]
-	mov [buffer + 3], eax
-	mov [buffer+4], byte')'
-	mov eax, buffer
+	mov [infix + 3], eax
+	mov [infix+4], byte')'
+	mov eax, infix
 	call print_string
 	dump_regs 2
 	
@@ -108,38 +106,46 @@ infix_first:
 	;call print_char
 	xor eax, eax
 	inc ecx
-	mov ecx,4
 	jmp middle
 infix_middle:
 	xor ebx,ebx
+	xor eax,eax
 	mov [tmp], byte'('
 	inc ebx
 	doing:
-	mov al, [buffer + ebx]
-	mov [tmp+ebx], eax
+	mov al, [infix + ebx-1]
+	mov [tmp+ebx], al
 	dump_regs 123
 	inc ebx
-	cmp al, ')'
+	cmp al, 0
 	jne doing
-	mov al, [input + ecx-1]
+	dec ebx
+	xor eax,eax
+	mov al, [input + ecx]
+	call print_char
+	dump_regs 51
 	mov [tmp+ebx], al
 	mov al, [input + edx]
+	call print_char
 	inc ebx
 	mov [tmp+ebx],al
 	inc ebx
 	mov [tmp+ebx],byte')'
 	xor ebx,ebx
-	looping:
-	
 	mov eax, tmp
 	dump_regs 1023
 	call print_string
 	xor eax,eax
+	
+	looping:
+	
+
 	mov al,[tmp+ebx]
-	mov [buffer+ebx],al
+	mov [infix+ebx],al
 	inc ebx
 	cmp al,0
 	jne looping
+	inc ecx
 	jmp middle
 	
 	
@@ -158,7 +164,7 @@ _asm_main:
 	call postfix_to_infix
 	dump_regs 201
 	xor ecx,ecx
-	mov eax, buffer
+	mov eax, infix
 	call print_string
 	;looping:
 	; mov al,[infix+ecx]
