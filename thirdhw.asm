@@ -62,24 +62,33 @@ postfix_to_infix:
 	je infix_first
 	cmp al, '+'
 	je infix_first
-	cmp al, 41	;A
-	;push eax
-	jge pusher
-	cmp al, 10
-	je return
+	push eax
 	inc ecx	;only inc when not operand
 	jmp first
-
+	
+	middle:
+	mov al,[input + ecx]
+	inc ecx
+	
+	cmp al, '/'
+	je infix_middle
+	cmp al, '*'
+	je infix_middle
+	cmp al, '-'
+	je infix_middle
+	cmp al, '+'
+	je infix_middle
+	cmp al, 10	;A
+	je return
+	push eax
+	inc ecx	;only inc when not operand
+	jmp middle
+	
 return:
 	ret
-pusher:
-	push eax
-	inc ecx
-	jmp first
-	
 	
 infix_first:
-	
+
 	xor edx,edx
 	mov [buffer], edx
 	mov bl, al	
@@ -89,6 +98,14 @@ infix_first:
 	pop eax
 	mov [buffer + 2], eax
 	mov edx, [counter]
+	mov eax, [buffer]
+	push 10
+	push eax
+	mov eax, [buffer+1]
+	push eax
+	mov eax, [buffer+2]
+	push eax
+	dump_regs 3
 	mov eax, buffer
 	call print_string
 	dump_regs 2
@@ -97,18 +114,23 @@ infix_first:
 	;call print_char
 	xor eax, eax
 	inc ecx
-	jmp first
+	jmp middle
 infix_middle:
+	jmp pop_string
+	here:
 pop_string:
+dump_regs 10
 	pop eax
-	xor ecx,ecx
 	xor edx,edx
+	mov [count], ecx
+	xor ecx,ecx
 	stringloop:
 	pop eax
 	cmp al, 10
+	dump_regs 10
 	je flip
 	dump_regs 3
-	mov [tmp + ecx], al
+	mov [tmp + edx], al
 	inc ecx
 	jmp stringloop
 	mov [count], ecx
@@ -126,6 +148,8 @@ pop_string:
 	jne flip
 	mov eax,[tmp2]
 	call print_string
+	mov ecx, [count]
+	jmp here
 postfix_to_prefix:
 		
 	mov [prefix + edx], eax
