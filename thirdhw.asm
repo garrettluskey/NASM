@@ -1,3 +1,20 @@
+;
+;
+;Names: Garrett Ludskey and Justin Mulrooney
+;Course: CS 3230, Section 2, Spring 2017
+;Purpose: This programs takes in a postfix expression and then
+;		  outputs the expression in infix and prefix formatting.
+;
+;Note: the prefix only works with 3 opeands and two opeartors. Such as
+;      ab*c- it will output *ab-c
+;
+;
+;Input: The input is a postfix expression
+;
+;
+;Output: The output is a prefix and infix expression
+;
+
 
 %include "asm_io.inc"
 
@@ -16,6 +33,10 @@ segment .bss
 segment .text
 	global  _asm_main
 
+;--------------------------------------------------------------
+;This subprogram takes in the input from the user and stores it
+;in an variable, input
+;--------------------------------------------------------------	
 read_postfix:
 	
 	mov eax, msg1
@@ -29,26 +50,20 @@ read_postfix:
 	inc ecx
 	
 	cmp al,0xA
-	je exit
+	je return
 	jne do
 
-	
-exit:
-	;mov word[input + ecx], 'NUL'
-	ret
-		
+;--------------------------------------------------------------
+;This subprogram takes the input in postfix form and makes it in
+;infix form. It loops and calls infix_first
+;--------------------------------------------------------------			
 postfix_to_infix:
-	;dump_stack 1,2,3
 	xor ecx,ecx
 	xor edx, edx
 	xor ebx,ebx
-	mov eax, input
-	call print_string
 	xor eax, eax
 	first:
-	mov al,[input + ecx]	;was oringinally set to 10
-						;not jumping to return. it should be. EAX should be 
-						;10 or 0xA but it is 0804A02C which means nothing
+	mov al,[input + ecx]
 	cmp al, '/'
 	je infix_first
 	cmp al, '*'
@@ -78,9 +93,16 @@ postfix_to_infix:
 
 	jmp middle
 	ret
+	
+;--------------------------------------------------------------
+;This subprogram is called whenever we need a ret
+;--------------------------------------------------------------
 return:
 	ret
-	
+;--------------------------------------------------------------
+;This subprogram is called to finish the postfix expression and
+;then it adds parenthesis where needed
+;--------------------------------------------------------------	
 infix_first:
 	mov [infix + ebx], byte'('
 	inc ebx
@@ -167,18 +189,97 @@ infix_inner:
 	cmp ah,0
 	jne move_right
 	jmp middle
+	
+	
 counter_open:
 	add [counter], byte 1
 	jmp back
+	
+	
 counter_close:
 	sub [counter], byte 1
 	jmp back
+	
+;--------------------------------------------------------------
+;This subprogram is called to take in a prefix expression and
+;then call the correct subprogram depending on what pass it is in
+;--------------------------------------------------------------		
+postfix_to_prefix:
+	xor ecx, ecx
+	xor edx, edx
+	xor eax,eax
+	the_great_loop:
+	mov al, [input + ecx]
+	cmp al, '/'
+	je prefix_first
+	cmp al, '*'
+	je prefix_first
+	cmp al, '-'
+	je prefix_first
+	cmp al, '+'
+	je prefix_first
+	cmp al, 0	;A
+	je return
+
+	inc ecx
+	jmp the_great_loop
+;--------------------------------------------------------------
+;This subprogram is called durring the first pass and gets the first
+; two operands and the first operator. It places the first operator
+;in front of the first two operands
+;--------------------------------------------------------------			
+prefix_first:
+	mov [prefix + edx], eax
+	mov al, [input + ecx - 2]
+	inc edx
+	mov [prefix + edx], eax	
+	mov al, [input + ecx - 1]
+	inc edx
+	mov [prefix + edx], eax
+	inc ecx
+	jmp the_greater_loop
+;--------------------------------------------------------------
+;This subprogram is called from prefix second so that it will call
+;the correct subprogram after the first pass
+;--------------------------------------------------------------			
+postfix_to_prefix_second:
+	the_greater_loop:
+	mov al, [input + ecx]
+	cmp al, '/'
+	je prefix_second
+	cmp al, '*'
+	je prefix_second
+	cmp al, '-'
+	je prefix_second
+	cmp al, '+'
+	je prefix_second
+	cmp al, 0	;A
+	je return
+	inc ecx
+	jmp the_greater_loop
+;--------------------------------------------------------------
+;This subprogram is called durring the second pass. It puts the
+; operand in front of the last operand
+;--------------------------------------------------------------			
+prefix_second:
+	inc edx
+	mov [prefix + edx], eax
+	mov al, [input + ecx - 1]
+	inc edx
+	mov [prefix + edx], eax
+	inc edx
+	inc ecx
+	jmp the_greater_loop
 	
 _asm_main:
 	enter   0,0               ; setup routine
 	pusha
 	call read_postfix
 	call postfix_to_infix
+	call postfix_to_prefix
+	mov eax, prefix
+	call print_string
+	call print_nl
 	xor ecx,ecx
 	mov eax, infix
 	call print_string
