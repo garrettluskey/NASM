@@ -78,6 +78,7 @@ postfix_to_infix:
 	je infix_middle
 	cmp al, '+'
 	je infix_middle
+	mov ebx, ecx
 	cmp al, 10	;A
 	je return
 	;push eax
@@ -93,7 +94,7 @@ infix_first:
 	mov [buffer], edx
 	mov bl, al	
 	mov [buffer], byte'('
-	mov al, [input + ecx - 2]	
+	mov al, [input + ecx - 2]
 	mov [buffer+1], eax		;it is only adding this]
 	mov [buffer + 2], ebx	;operator
 	mov al, [input + ecx - 1]
@@ -110,10 +111,9 @@ infix_first:
 	mov ecx,4
 	jmp middle
 infix_middle:
-	
+	xor ebx,ebx
 	mov [tmp], byte'('
 	inc ebx
-	xor ebx,ebx
 	doing:
 	mov al, [buffer + ebx]
 	mov [tmp+ebx], eax
@@ -121,16 +121,16 @@ infix_middle:
 	inc ebx
 	cmp al, ')'
 	jne doing
-	mov al, [input + ecx -1]
+	mov al, [input + ecx-1]
 	mov [tmp+ebx], al
-	mov al, [input + ecx - 2]
+	mov al, [input + edx]
 	inc ebx
 	mov [tmp+ebx],al
 	inc ebx
 	mov [tmp+ebx],byte')'
-
-	looping:
 	xor ebx,ebx
+	looping:
+	
 	mov eax, tmp
 	dump_regs 1023
 	call print_string
@@ -138,10 +138,8 @@ infix_middle:
 	mov al,[tmp+ebx]
 	mov [buffer+ebx],al
 	inc ebx
-	call print_char
-	cmp al,0xA
-	
-	;jne looping
+	cmp al,0
+	jne looping
 	jmp middle
 	
 	
