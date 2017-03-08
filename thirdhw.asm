@@ -15,7 +15,7 @@ segment .bss
 	prefix resd 1
 	count resd 1
 	counter resd 1
-	operand resb 0
+	base resb 0
 	
 segment .text
 	global  _asm_main
@@ -62,11 +62,11 @@ postfix_to_infix:
 	je infix_first
 	cmp al, '+'
 	je infix_first
-	push eax
 	inc ecx	;only inc when not operand
 	jmp first
 	
 	middle:
+	
 	mov al,[input + ecx]
 	inc ecx
 	
@@ -80,10 +80,10 @@ postfix_to_infix:
 	je infix_middle
 	cmp al, 10	;A
 	je return
-	push eax
+	;push eax
 	inc ecx	;only inc when not operand
 	jmp middle
-	
+	ret
 return:
 	ret
 	
@@ -92,20 +92,13 @@ infix_first:
 	xor edx,edx
 	mov [buffer], edx
 	mov bl, al	
-	pop eax		
-	mov [buffer], eax		;it is only adding this]
-	mov [buffer + 1], ebx	;operator
-	pop eax
-	mov [buffer + 2], eax
-	mov edx, [counter]
-	mov eax, [buffer]
-	push 10
-	push eax
-	mov eax, [buffer+1]
-	push eax
-	mov eax, [buffer+2]
-	push eax
-	dump_regs 3
+	mov [buffer], byte'('
+	mov al, [input + ecx - 2]	
+	mov [buffer+1], eax		;it is only adding this]
+	mov [buffer + 2], ebx	;operator
+	mov al, [input + ecx - 1]
+	mov [buffer + 3], eax
+	mov [buffer+4], byte')'
 	mov eax, buffer
 	call print_string
 	dump_regs 2
@@ -114,56 +107,45 @@ infix_first:
 	;call print_char
 	xor eax, eax
 	inc ecx
+	mov ecx,4
 	jmp middle
 infix_middle:
-	jmp pop_string
-	here:
-pop_string:
-dump_regs 10
-	pop eax
-	xor edx,edx
-	mov [count], ecx
-	xor ecx,ecx
-	stringloop:
-	pop eax
-	cmp al, 10
-	dump_regs 10
-	je flip
-	dump_regs 3
-	mov [tmp + edx], al
-	inc ecx
-	jmp stringloop
-	mov [count], ecx
-	dump_regs 2
-	flip:
-	mov edx, [count]
-	sub edx, ecx
-	mov eax,[tmp + edx]
-	mov [tmp2 + edx], eax
-	inc edx
-	dec ecx
-	cmp ecx, 0
 	
-	
-	jne flip
-	mov eax,[tmp2]
+	mov [tmp], byte'('
+	inc ebx
+	xor ebx,ebx
+	doing:
+	mov al, [buffer + ebx]
+	mov [tmp+ebx], eax
+	dump_regs 123
+	inc ebx
+	cmp al, ')'
+	jne doing
+	mov al, [input + ecx -1]
+	mov [tmp+ebx], al
+	mov al, [input + ecx - 2]
+	inc ebx
+	mov [tmp+ebx],al
+	inc ebx
+	mov [tmp+ebx],byte')'
+
+	looping:
+	xor ebx,ebx
+	mov eax, tmp
+	dump_regs 1023
 	call print_string
-	mov ecx, [count]
-	jmp here
-postfix_to_prefix:
-		
-	mov [prefix + edx], eax
-	mov [count], ecx
-	sub ecx,ebx
-	inc edx
-	mov al, [input + ecx - 1]
-	mov [prefix + edx], al
+	xor eax,eax
+	mov al,[tmp+ebx]
+	mov [buffer+ebx],al
 	inc ebx
-	inc ebx
-	ret
+	call print_char
+	cmp al,0xA
+	
+	;jne looping
+	jmp middle
+	
+	
 
-
-		
 print:
 	call print_char
 	;jmp looping
@@ -176,6 +158,7 @@ _asm_main:
 	mov byte[counter], 2
 	call read_postfix
 	call postfix_to_infix
+	dump_regs 201
 	xor ecx,ecx
 	mov eax, buffer
 	call print_string
